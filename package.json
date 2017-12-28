@@ -1,0 +1,31 @@
+{
+  "name": "whipple-video",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node node_modules/mocha/bin/mocha test --recursive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonathan-fulton/whipple-video.git"
+  },
+  "keywords": [
+    "ffmpeg",
+    "create",
+    "video"
+  ],
+  "author": "Jonathan Fulton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonathan-fulton/whipple-video/issues"
+  },
+  "homepage": "https://github.com/jonathan-fulton/whipple-video#readme",
+  "devDependencies": {
+    "mocha": "4.0.1",
+    "should": "13.2.0"
+  },
+  "dependencies": {
+    "joi": "^13.0.2"
+  }
+}

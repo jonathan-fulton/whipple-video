@@ -1,1 +1,5 @@
 # whipple
+
+```
+ffmpeg -i sample.mp4 -i sample2.mp4 -i music.mp3 -i music2.mp3 -loop 1 -i logo.png  -f lavfi -i anullsrc -f lavfi -i color=c=black:size=1920x1080 -filter_complex "[0:v] trim=start=4:duration=10,setpts=PTS-STARTPTS [v1]; [1:v] trim=start=4:duration=10,setpts=PTS-STARTPTS [v2]; [v1] [v2] concat=n=2:v=1:a=0 [v_concat]; [6:v] format=yuva420p, colorchannelmixer=aa=0.6 [overlay]; [overlay] fade=t=in:st=15:d=2:alpha=1 [overlay_fade]; [v_concat] [overlay_fade] overlay=shortest=1 [v_overlay]; [v_overlay] drawtext=text='Hello World':enable=1:x=800:y=450:fontsize=60:fontfile=/System/Library/Fonts/HelveticaNeueDeskInterface.ttc:fontcolor_expr=ffffff%{eif\\\\: clip(255*(1*between(t\\, 1.0 + 1.0\\, 6.0 - 1.0) + ((t - 1.0)/1.0)*between(t\\, 1.0\\, 1.0 + 1.0) + (-(t - 6.0)/1.0)*between(t\\, 6.0 - 1.0\\, 6.0) )\\, 0\\, 255) \\\\: x\\\\: 2 } [v_text]; [4:v] fade=t=in:st=16:d=1:alpha=1 [logo]; [v_text] [logo] overlay=x=900:y=450:shortest=1 [v_logo]" -map "[v_logo]" output.mp4
+```
