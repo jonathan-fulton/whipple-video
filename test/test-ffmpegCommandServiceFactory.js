@@ -12,6 +12,8 @@ describe('FfmpegCommandServiceFactory', function() {
 
         it('Should properly instantiate an instance of FfmpegCommandService', function() {
             const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                pathToFfmpegBin: '/usr/local/bin/ffmpeg'
+            }, {
                 fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
                 fonts: [{
                     name: 'Avenir',
@@ -25,11 +27,37 @@ describe('FfmpegCommandServiceFactory', function() {
             Should(ffmpegCommandService).be.an.instanceOf(FfmpegCommandService);
         });
 
+        it('Should throw an error if pathToFfmpegBin not provided', function() {
+
+            let actualErr;
+            try {
+                const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                }, {
+                    fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
+                    fonts: [{
+                        name: 'Avenir',
+                        fontFilePath: 'Avenir.ttc'
+                    }, {
+                        name: 'Helvetica',
+                        fontFilePath: 'HelveticaNeueDeskInterface.ttc'
+                    }]
+                });
+            } catch(e) {
+                actualErr = e;
+            }
+
+            Should(actualErr).be.an.instanceOf(Error);
+            Should(actualErr.message).eql(`child "pathToFfmpegBin" fails because ["pathToFfmpegBin" is required]`);
+
+        });
+
         it('Should throw an error if a font file is not found', function() {
 
             let actualErr;
             try {
                 const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                    pathToFfmpegBin: '/usr/local/bin/ffmpeg'
+                },{
                     fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
                     fonts: [{
                         name: 'Avenir',
@@ -53,6 +81,8 @@ describe('FfmpegCommandServiceFactory', function() {
             let actualErr;
             try {
                 const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                    pathToFfmpegBin: '/usr/local/bin/ffmpeg'
+                },{
                     fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1')
                 });
             } catch(e) {
@@ -70,6 +100,8 @@ describe('FfmpegCommandServiceFactory', function() {
             let actualErr;
             try {
                 const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                    pathToFfmpegBin: '/usr/local/bin/ffmpeg'
+                },{
                     fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
                     fonts: [{
                         fontFilePath: 'Avenir.ttc'
@@ -93,6 +125,8 @@ describe('FfmpegCommandServiceFactory', function() {
             let actualErr;
             try {
                 const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                    pathToFfmpegBin: '/usr/local/bin/ffmpeg'
+                },{
                     fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
                     fonts: [{
                         name: 'Avenir',
