@@ -4,7 +4,6 @@ const Should = require('should');
 const Path = require('path');
 
 const FfmpegCommandServiceFactory = require('../lib/ffmpegCommandServiceFactory');
-//const FfmpegCommandService = require('../lib/ffmpegCommandService');
 
 describe('FfmpegCommandService', function() {
 
@@ -396,21 +395,161 @@ describe('FfmpegCommandService', function() {
                     validateCommonSchemaError({ backgroundOverlay: { color: '12a456', alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { startTime: 1 } } }, 'child "backgroundOverlay" fails because [child "fadeOut" fails because [child "duration" fails because ["duration" is required]], "backgroundOverlay" must be an array]');
                     validateCommonSchemaError({ backgroundOverlay: [{ color: '12a456', alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { startTime: 1 } }] }, 'child "backgroundOverlay" fails because ["backgroundOverlay" must be an object, "backgroundOverlay" at position 0 fails because [child "fadeOut" fails because [child "duration" fails because ["duration" is required]]]]');
                 });
+
+                it('backgroundOverlay has unknown property', function() {
+                    validateCommonSchemaError({ backgroundOverlay: { badProperty: true, color: 'ffffff',alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 } } }, 'child "backgroundOverlay" fails because ["badProperty" is not allowed, "backgroundOverlay" must be an array]');
+                    validateCommonSchemaError({ backgroundOverlay: [{ badProperty: true, color: 'ffffff', alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "backgroundOverlay" fails because ["backgroundOverlay" must be an object, "backgroundOverlay" at position 0 fails because ["badProperty" is not allowed]]');
+                });
             });
 
             describe('Invalid imageOverlay inputs', function() {
+                it('imageOverlay.filePath must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "filePath" fails because ["filePath" is required], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
+                });
 
+                it('imageOverlay.fadeIn must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png' } }, 'child "imageOverlay" fails because [child "fadeIn" fails because ["fadeIn" is required], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png' }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because ["fadeIn" is required]]]');
+                });
+
+                it('imageOverlay.fadeIn.startTime must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { duration: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
+                });
+
+                it('imageOverlay.fadeIn.duration must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { startTime: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { startTime: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
+                });
+
+                it('imageOverlay.fadeOut.startTime must be provided if fadeOut is provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { duration: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
+                });
+
+                it('imageOverlay.fadeOut.duration must be provided if fadeOut is provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { startTime: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { startTime: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
+                });
+
+                it('imageOverlay has unknown property', function() {
+                    validateCommonSchemaError({ imageOverlay: { badProperty: true, filePath: 'logo.png', fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because ["badProperty" is not allowed, "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ badProperty: true, filePath: 'logo.png', fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because ["badProperty" is not allowed]]');
+                });
             });
 
             describe('Invalid textOverlay inputs', function() {
+                it('textOverlay.text must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "text" fails because ["text" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "text" fails because ["text" is required]]]');
+                });
 
+                it('textOverlay.fontName must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontName" fails because ["fontName" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontName" fails because ["fontName" is required]]]');
+                });
+
+                it('textOverlay.fontSize must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontSize" fails because ["fontSize" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontSize" fails because ["fontSize" is required]]]');
+                });
+                it('textOverlay.fontSize must greater than 0', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: -2, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontSize" fails because ["fontSize" must be larger than or equal to 0], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: -1, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontSize" fails because ["fontSize" must be larger than or equal to 0]]]');
+                });
+
+                it('textOverlay.fontColor must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontColor" fails because ["fontColor" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontColor" fails because ["fontColor" is required]]]');
+                });
+                it('textOverlay.fontSize must be a valid hex color of 6 characters (= 6 tested)', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: '12345g', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontColor" fails because ["fontColor" must only contain hexadecimal characters], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: '12345g', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontColor" fails because ["fontColor" must only contain hexadecimal characters]]]');
+                });
+                it('textOverlay.fontSize must be a valid hex color of 6 characters (< 6 tested)', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: '12345', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontColor" fails because ["fontColor" length must be at least 6 characters long], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: '12345', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontColor" fails because ["fontColor" length must be at least 6 characters long]]]');
+                });
+                it('textOverlay.fontSize must be a valid hex color of 6 characters (> 6 tested)', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: '1234567', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontColor" fails because ["fontColor" length must be less than or equal to 6 characters long], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: '1234567', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontColor" fails because ["fontColor" length must be less than or equal to 6 characters long]]]');
+                });
+
+                it('textOverlay.fontAlpha must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontAlpha" fails because ["fontAlpha" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontAlpha" fails because ["fontAlpha" is required]]]');
+                });
+                it('textOverlay.fontAlpha must be between 0 and 1 (> 1 tested)', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.1, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontAlpha" fails because ["fontAlpha" must be less than or equal to 1], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1003.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontAlpha" fails because ["fontAlpha" must be less than or equal to 1]]]');
+                });
+                it('textOverlay.fontAlpha must be between 0 and 1 (< 0 tested)', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: -100, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontAlpha" fails because ["fontAlpha" must be larger than or equal to 0], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: -200, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontAlpha" fails because ["fontAlpha" must be larger than or equal to 0]]]');
+                });
+
+                it('textOverlay.xLoc must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "xLoc" fails because ["xLoc" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "xLoc" fails because ["xLoc" is required]]]');
+                });
+                it('textOverlay.xLoc must be an integer', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400.7, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "xLoc" fails because ["xLoc" must be an integer], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 200.3, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "xLoc" fails because ["xLoc" must be an integer]]]');
+                });
+
+                it('textOverlay.yLoc must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "yLoc" fails because ["yLoc" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "yLoc" fails because ["yLoc" is required]]]');
+                });
+                it('textOverlay.yLoc must be an integer', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400.5, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "yLoc" fails because ["yLoc" must be an integer], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: -100.7, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "yLoc" fails because ["yLoc" must be an integer]]]');
+                });
+
+                it('textOverlay.fadeIn must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400 } }, 'child "textOverlay" fails because [child "fadeIn" fails because ["fadeIn" is required], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400 }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fadeIn" fails because ["fadeIn" is required]]]');
+                });
+                it('textOverlay.fadeIn.startTime must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { duration: 1 } } }, 'child "textOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
+                });
+                it('textOverlay.fadeIn.duration must be provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1 } } }, 'child "textOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
+                });
+
+                it('textOverlay.fadeOut.startTime must be provided if fadeOut provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { duration: 1 } } }, 'child "textOverlay" fails because [child "fadeOut" fails because [child "startTime" fails because ["startTime" is required]], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fadeOut" fails because [child "startTime" fails because ["startTime" is required]]]]');
+                });
+                it('textOverlay.fadeOut.duration must be provided if fadeOut provided', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { startTime: 1 } } }, 'child "textOverlay" fails because [child "fadeOut" fails because [child "duration" fails because ["duration" is required]], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { startTime: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fadeOut" fails because [child "duration" fails because ["duration" is required]]]]');
+                });
             });
 
             describe('Invalid output inputs', function() {
+                it('output.filePath is required', function() {
+                    validateCommonSchemaError({ output: {  } }, 'child "output" fails because [child "filePath" fails because ["filePath" is required]]');
+                });
 
+                it('output.includeMoovAtomAtFront must be a boolean', function() {
+                    validateCommonSchemaError({ output: { filePath: 'output.mp4', includeMoovAtomAtFront: 'hello' } }, 'child "output" fails because [child "includeMoovAtomAtFront" fails because ["includeMoovAtomAtFront" must be a boolean]]');
+                });
+
+                it('output.dimensions.width must be provided if output.dimensions is provided', function() {
+                    validateCommonSchemaError({ output: { filePath: 'output.mp4', dimensions: { height: 1080 } } }, 'child "output" fails because [child "dimensions" fails because [child "width" fails because ["width" is required]]]');
+                });
+                it('output.dimensions.height must be provided if output.dimensions is provided', function() {
+                    validateCommonSchemaError({ output: { filePath: 'output.mp4', dimensions: { width: 1920 } } }, 'child "output" fails because [child "dimensions" fails because [child "height" fails because ["height" is required]]]');
+                });
             });
 
             describe('Invalid workingDirectory inputs', function() {
+
+
 
             });
 
