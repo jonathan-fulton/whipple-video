@@ -237,6 +237,11 @@ describe('FfmpegCommandService', function() {
                     validateCommonSchemaError({ video: [{ filePath: 1, dimensions: { width: 1920, height: 1080 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "filePath" fails because ["filePath" must be a string]]]');
                 });
 
+                it('video.filePath must exist as an actual file', function() {
+                    validateCommonSchemaError({ video: { filePath: 'unknownfile.mp4', dimensions: { width: 1920, height: 1080 } } }, `video file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.mp4')}" does not exist.`);
+                    validateCommonSchemaError({ video: [{ filePath: 'unknownfile.mp4', dimensions: { width: 1920, height: 1080 } }] }, `video file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.mp4')}" does not exist.`);
+                });
+
                 it('video.dimensions must be provided', function() {
                     validateCommonSchemaError({ video: { filePath: 'sample.mp4' } }, 'child "video" fails because [child "dimensions" fails because ["dimensions" is required], "video" must be an array]');
                     validateCommonSchemaError({ video: [{ filePath: 'sample.mp4' }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "dimensions" fails because ["dimensions" is required]]]');
@@ -270,13 +275,18 @@ describe('FfmpegCommandService', function() {
 
             describe('Invalid audio inputs', function() {
                 it('audio.filePath must be provided', function() {
-                    validateCommonSchemaError({ audio: { dimensions: { width: 1920, height: 1080 } } }, 'child "audio" fails because [child "filePath" fails because ["filePath" is required], "audio" must be an array]');
-                    validateCommonSchemaError({ audio: [{ dimensions: { width: 1920, height: 1080 } }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
+                    validateCommonSchemaError({ audio: { } }, 'child "audio" fails because [child "filePath" fails because ["filePath" is required], "audio" must be an array]');
+                    validateCommonSchemaError({ audio: [{ }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
                 });
 
                 it('audio.filePath must be a string', function() {
-                    validateCommonSchemaError({ audio: { filePath: 1, dimensions: { width: 1920, height: 1080 } } }, 'child "audio" fails because [child "filePath" fails because ["filePath" must be a string], "audio" must be an array]');
-                    validateCommonSchemaError({ audio: [{ filePath: 1, dimensions: { width: 1920, height: 1080 } }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "filePath" fails because ["filePath" must be a string]]]');
+                    validateCommonSchemaError({ audio: { filePath: 1 } }, 'child "audio" fails because [child "filePath" fails because ["filePath" must be a string], "audio" must be an array]');
+                    validateCommonSchemaError({ audio: [{ filePath: 1 }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "filePath" fails because ["filePath" must be a string]]]');
+                });
+
+                it('audio.filePath must exist as an actual file', function() {
+                    validateCommonSchemaError({ audio: { filePath: 'unknownfile.mp3' } }, `audio file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.mp3')}" does not exist.`);
+                    validateCommonSchemaError({ audio: [{ filePath: 'unknownfile.mp3' }] }, `audio file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.mp3')}" does not exist.`);
                 });
 
                 it('audio.trimStart must be a number >= 0', function() {
@@ -408,6 +418,11 @@ describe('FfmpegCommandService', function() {
                     validateCommonSchemaError({ imageOverlay: [{ fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
                 });
 
+                it('imageOverlay.filePath must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'unknownfile.png', fadeIn: { startTime: 1, duration: 1 } } }, `imageOverlay file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.png')}" does not exist.`);
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'unknownfile.png', fadeIn: { startTime: 1, duration: 1 } }] }, `imageOverlay file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.png')}" does not exist.`);
+                });
+
                 it('imageOverlay.fadeIn must be provided', function() {
                     validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png' } }, 'child "imageOverlay" fails because [child "fadeIn" fails because ["fadeIn" is required], "imageOverlay" must be an array]');
                     validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png' }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because ["fadeIn" is required]]]');
@@ -448,6 +463,11 @@ describe('FfmpegCommandService', function() {
                 it('textOverlay.fontName must be provided', function() {
                     validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "fontName" fails because ["fontName" is required], "textOverlay" must be an array]');
                     validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fontName" fails because ["fontName" is required]]]');
+                });
+
+                it('textOverlay.fontName must exist in font config', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world!', fontName: 'unknown', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'Font with name "unknown" does not exist.');
+                    validateCommonSchemaError({ textOverlay: [{text: 'Hello, world!', fontName: 'unknown', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'Font with name "unknown" does not exist.');
                 });
 
                 it('textOverlay.fontSize must be provided', function() {
