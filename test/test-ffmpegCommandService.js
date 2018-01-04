@@ -48,7 +48,7 @@ describe('FfmpegCommandService', function() {
                     workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
                 });
 
-                Should(command).eql('someCommand');
+                Should(command).eql('/usr/local/bin/ffmpeg -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample.mp4 -filter_complex " [0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]" -map "[v_concat]" -y /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/output.mp4');
             });
 
             it('Should work with a video and an audio object provided', function() {
@@ -58,10 +58,14 @@ describe('FfmpegCommandService', function() {
                         dimensions: {
                             width: 1920,
                             height: 1080
-                        }
+                        },
+                        trimStart: 0,
+                        trimDuration: 10
                     },
                     audio: {
-                        filePath: 'music.mp3'
+                        filePath: 'music.mp3',
+                        trimStart: 0,
+                        trimDuration: 10
                     },
                     output: {
                         filePath: 'output.mp4',
@@ -73,7 +77,7 @@ describe('FfmpegCommandService', function() {
                     workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
                 });
 
-                Should(command).eql('someCommand');
+                Should(command).eql('/usr/local/bin/ffmpeg -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample.mp4 -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/music.mp3 -filter_complex " [0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]" -map "[v_concat]" -map "[a_concat]" -y /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/output.mp4');
             });
 
             it('Should work with a video and a backgroundOverlay object provided', function() {
@@ -107,7 +111,7 @@ describe('FfmpegCommandService', function() {
                     workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
                 });
 
-                Should(command).eql('someCommand');
+                Should(command).eql('/usr/local/bin/ffmpeg -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample.mp4 -f lavfi -i color=c=aaaaaa:size=1920x1080 -filter_complex " [0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; [v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1 [v_overlay_0_fade]; [v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]" -map "[v_overlay_0]" -y /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/output.mp4');
             });
 
             it('Should work with a video and an imageOverlay object provided', function() {
@@ -121,6 +125,8 @@ describe('FfmpegCommandService', function() {
                     },
                     imageOverlay: {
                         filePath: 'logo.png',
+                        xLoc: 500,
+                        yLoc: 400,
                         fadeIn: {
                             startTime: 5,
                             duration: 2
@@ -140,7 +146,7 @@ describe('FfmpegCommandService', function() {
                     workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
                 });
 
-                Should(command).eql('someCommand');
+                Should(command).eql('/usr/local/bin/ffmpeg -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample.mp4 -loop 1 -i logo.png -filter_complex " [0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; [v_concat] [v_image_0_layer] overlay=x=500:y=400:shortest=1 [v_image_0]" -map "[v_image_0]" -y /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/output.mp4');
             });
 
             it('Should work with a video and a textOverlay object provided', function() {
@@ -179,8 +185,130 @@ describe('FfmpegCommandService', function() {
                     workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
                 });
 
-                Should(command).eql('someCommand');
+                Should(command).eql('/usr/local/bin/ffmpeg -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample.mp4 -filter_complex " [0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600:fontfile=/Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/fonts1/Avenir.ttc:fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/output.mp4');
             });
+
+            it('Should work with multiple values provided for each command property', function() {
+                const command = ffmpegCommandService.createFfmpegCommand({
+                    video: [{
+                        filePath: 'sample.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        },
+                        trimStart: 0,
+                        trimDuration: 10
+                    }, {
+                        filePath: 'sample2.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        },
+                        trimStart: 0,
+                        trimDuration: 10
+                    }],
+                    audio: [{
+                        filePath: 'music.mp3',
+                        trimStart: 0,
+                        trimDuration: 9
+                    }, {
+                        filePath: 'music2.mp3',
+                        trimStart: 0,
+                        trimDuration: 11
+                    }],
+                    backgroundOverlay: [{
+                        color: '555555',
+                        alpha: 0.6,
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        },
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 1
+                        },
+                        fadeOut: {
+                            startTime: 8,
+                            duration: 3
+                        }
+                    },{
+                        color: 'ff0000',
+                        alpha: 0.7,
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        },
+                        fadeIn: {
+                            startTime: 14,
+                            duration: 1
+                        }
+                    }],
+                    imageOverlay: [{
+                        filePath: 'logo.png',
+                        xLoc: 300,
+                        yLoc: 400,
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 2
+                        },
+                        fadeOut: {
+                            startTime: 10,
+                            duration: 1
+                        }
+                    },{
+                        filePath: 'logo.png',
+                        xLoc: 1000,
+                        yLoc: 400,
+                        fadeIn: {
+                            startTime: 15,
+                            duration: 2
+                        }
+                    }],
+                    textOverlay: [{
+                        text: 'Hello, world!',
+                        fontName: 'Avenir',
+                        fontSize: 50,
+                        fontColor: 'ffffff',
+                        fontAlpha: 1,
+                        xLoc: 600,
+                        yLoc: 600,
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 1
+                        },
+                        fadeOut: {
+                            startTime: 10,
+                            duration: 1
+                        }
+                    }, {
+                        text: 'Go away!',
+                        fontName: 'Avenir',
+                        fontSize: 75,
+                        fontColor: 'ff0000',
+                        fontAlpha: 0.8,
+                        xLoc: 800,
+                        yLoc: 400,
+                        fadeIn: {
+                            startTime: 7,
+                            duration: 2
+                        },
+                        fadeOut: {
+                            startTime: 15,
+                            duration: 1
+                        }
+                    }],
+                    output: {
+                        filePath: 'output.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                });
+
+                Should(command).eql('/usr/local/bin/ffmpeg -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample.mp4 -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/sample2.mp4 -f lavfi -i color=c=555555:size=1920x1080 -f lavfi -i color=c=ff0000:size=1920x1080 -loop 1 -i logo.png -loop 1 -i logo.png -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/music.mp3 -i /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/music2.mp3 -filter_complex " [0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [1:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v1]; [v0] [v1] concat=n=2:v=1:a=0 [v_concat]; [2:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; [v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1, fade=t=out:st=8:d=3:alpha=1 [v_overlay_0_fade]; [v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]; [3:v] format=yuva420p, colorchannelmixer=aa=0.7 [v_overlay_1_mixin]; [v_overlay_1_mixin] fade=t=in:st=14:d=1:alpha=1 [v_overlay_1_fade]; [v_overlay_0] [v_overlay_1_fade] overlay=shortest=1 [v_overlay_1]; [4] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; [v_overlay_1] [v_image_0_layer] overlay=x=300:y=400:shortest=1 [v_image_0]; [5] fade=t=in:st=15:d=2:alpha=1 [v_image_1_layer]; [v_image_0] [v_image_1_layer] overlay=x=1000:y=400:shortest=1 [v_image_1]; [v_image_1] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600:fontfile=/Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/fonts1/Avenir.ttc:fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 }, drawtext=enable=1:text=\'Go away\\!\':x=800:y=400:fontfile=/Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/fonts1/Avenir.ttc:fontsize=75:fontcolor_expr=ff0000%{eif\\\\\\\\: clip(255*0.8*(1*between(t\\\\, 9\\\\, 15) + ((t - 7)/2)*between(t\\\\, 7\\\\, 9) + (-(t - 16)/1)*between(t\\\\, 15\\\\, 16) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [6:a] atrim=start=0:duration=9, asetpts=PTS-STARTPTS [a0]; [7:a] atrim=start=0:duration=11, asetpts=PTS-STARTPTS [a1]; [a0] [a1] concat=n=2:v=0:a=1 [a_concat]" -map "[v_text]" -map "[a_concat]" -y /Users/jonathanfulton/projects/misc/whipple-video/test/fixtures/assets1/output.mp4');
+            })
         });
 
         describe('Invalid inputs', function() {
@@ -227,6 +355,10 @@ describe('FfmpegCommandService', function() {
             // You will therefore see more or less duplicate tests as a result, one for the object form and one for the array form
 
             describe('Invalid video inputs', function() {
+                it('video array must contain at least one item', function() {
+                    validateCommonSchemaError({ video: [] }, 'child "video" fails because ["video" must be an object, "video" does not contain 1 required value(s)]');
+                });
+
                 it('video.filePath must be provided', function() {
                     validateCommonSchemaError({ video: { dimensions: { width: 1920, height: 1080 } } }, 'child "video" fails because [child "filePath" fails because ["filePath" is required], "video" must be an array]');
                     validateCommonSchemaError({ video: [{ dimensions: { width: 1920, height: 1080 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
@@ -257,14 +389,24 @@ describe('FfmpegCommandService', function() {
                     validateCommonSchemaError({ video: [{ filePath: 'sample.mp4', dimensions: { width: 1920 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "dimensions" fails because [child "height" fails because ["height" is required]]]]');
                 });
 
-                it('video.trimStart must be a number >= 0', function() {
+                it('video.trimStart must be a number between 0 and 600 (< 0 tested)', function() {
                     validateCommonSchemaError({ video: { filePath: 'sample.mp4', trimStart: -1, dimensions: { width: 1920, height: 1080 } } }, 'child "video" fails because [child "trimStart" fails because ["trimStart" must be larger than or equal to 0], "video" must be an array]');
                     validateCommonSchemaError({ video: [{ filePath: 'sample.mp4', trimStart: -1, dimensions: { width: 1920, height: 1080 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "trimStart" fails because ["trimStart" must be larger than or equal to 0]]]');
                 });
 
-                it('video.trimDuration must be a number >= 0', function() {
+                it('video.trimStart must be a number between 0 and 600 (> 600 tested)', function() {
+                    validateCommonSchemaError({ video: { filePath: 'sample.mp4', trimStart: 601, dimensions: { width: 1920, height: 1080 } } }, 'child "video" fails because [child "trimStart" fails because ["trimStart" must be less than or equal to 600], "video" must be an array]');
+                    validateCommonSchemaError({ video: [{ filePath: 'sample.mp4', trimStart: 7000, dimensions: { width: 1920, height: 1080 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "trimStart" fails because ["trimStart" must be less than or equal to 600]]]');
+                });
+
+                it('video.trimDuration must be a number between 0 and 600 (< 0 tested)', function() {
                     validateCommonSchemaError({ video: { filePath: 'sample.mp4', trimDuration: -1, dimensions: { width: 1920, height: 1080 } } }, 'child "video" fails because [child "trimDuration" fails because ["trimDuration" must be larger than or equal to 0], "video" must be an array]');
                     validateCommonSchemaError({ video: [{ filePath: 'sample.mp4', trimDuration: -1, dimensions: { width: 1920, height: 1080 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "trimDuration" fails because ["trimDuration" must be larger than or equal to 0]]]');
+                });
+
+                it('video.trimDuration must be a number between 0 and 600 (> 600 tested)', function() {
+                    validateCommonSchemaError({ video: { filePath: 'sample.mp4', trimDuration: 1323, dimensions: { width: 1920, height: 1080 } } }, 'child "video" fails because [child "trimDuration" fails because ["trimDuration" must be less than or equal to 600], "video" must be an array]');
+                    validateCommonSchemaError({ video: [{ filePath: 'sample.mp4', trimDuration: 601, dimensions: { width: 1920, height: 1080 } }] }, 'child "video" fails because ["video" must be an object, "video" at position 0 fails because [child "trimDuration" fails because ["trimDuration" must be less than or equal to 600]]]');
                 });
 
                 it('video has unknown property', function() {
@@ -274,6 +416,10 @@ describe('FfmpegCommandService', function() {
             });
 
             describe('Invalid audio inputs', function() {
+                it('audio array must contain at least one item', function() {
+                    validateCommonSchemaError({ audio: [] }, 'child "audio" fails because ["audio" must be an object, "audio" must contain at least 1 items]');
+                });
+
                 it('audio.filePath must be provided', function() {
                     validateCommonSchemaError({ audio: { } }, 'child "audio" fails because [child "filePath" fails because ["filePath" is required], "audio" must be an array]');
                     validateCommonSchemaError({ audio: [{ }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
@@ -289,14 +435,24 @@ describe('FfmpegCommandService', function() {
                     validateCommonSchemaError({ audio: [{ filePath: 'unknownfile.mp3' }] }, `audio file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.mp3')}" does not exist.`);
                 });
 
-                it('audio.trimStart must be a number >= 0', function() {
+                it('audio.trimStart must be a number between 0 and 600 (< 0 tested)', function() {
                     validateCommonSchemaError({ audio: { filePath: 'music.mp3', trimStart: -1 } }, 'child "audio" fails because [child "trimStart" fails because ["trimStart" must be larger than or equal to 0], "audio" must be an array]');
                     validateCommonSchemaError({ audio: [{ filePath: 'music.mp3', trimStart: -1 }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "trimStart" fails because ["trimStart" must be larger than or equal to 0]]]');
                 });
 
-                it('audio.trimDuration must be a number >= 0', function() {
+                it('audio.trimStart must be a number between 0 and 600 (> 600 tested)', function() {
+                    validateCommonSchemaError({ audio: { filePath: 'music.mp3', trimStart: 601 } }, 'child "audio" fails because [child "trimStart" fails because ["trimStart" must be less than or equal to 600], "audio" must be an array]');
+                    validateCommonSchemaError({ audio: [{ filePath: 'music.mp3', trimStart: 7000 }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "trimStart" fails because ["trimStart" must be less than or equal to 600]]]');
+                });
+
+                it('audio.trimDuration must be a number between 0 and 600 (< 0 tested)', function() {
                     validateCommonSchemaError({ audio: { filePath: 'music.mp3', trimDuration: -1 } }, 'child "audio" fails because [child "trimDuration" fails because ["trimDuration" must be larger than or equal to 0], "audio" must be an array]');
                     validateCommonSchemaError({ audio: [{ filePath: 'music.mp3', trimDuration: -1 }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "trimDuration" fails because ["trimDuration" must be larger than or equal to 0]]]');
+                });
+
+                it('audio.trimDuration must be a number between 0 and 600 (> 600 tested)', function() {
+                    validateCommonSchemaError({ audio: { filePath: 'music.mp3', trimDuration: 17893 } }, 'child "audio" fails because [child "trimDuration" fails because ["trimDuration" must be less than or equal to 600], "audio" must be an array]');
+                    validateCommonSchemaError({ audio: [{ filePath: 'music.mp3', trimDuration: 601 }] }, 'child "audio" fails because ["audio" must be an object, "audio" at position 0 fails because [child "trimDuration" fails because ["trimDuration" must be less than or equal to 600]]]');
                 });
 
                 it('audio has unknown property', function() {
@@ -306,6 +462,10 @@ describe('FfmpegCommandService', function() {
             });
 
             describe('Invalid backgroundOverlay inputs', function() {
+                it('backgroundOverlay array must contain at least one item', function() {
+                    validateCommonSchemaError({ backgroundOverlay: [] }, 'child "backgroundOverlay" fails because ["backgroundOverlay" must be an object, "backgroundOverlay" must contain at least 1 items]');
+                });
+
                 it('backgroundOverlay.color must be provided', function() {
                     validateCommonSchemaError({ backgroundOverlay: { alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 } } }, 'child "backgroundOverlay" fails because [child "color" fails because ["color" is required], "backgroundOverlay" must be an array]');
                     validateCommonSchemaError({ backgroundOverlay: [{ alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "backgroundOverlay" fails because ["backgroundOverlay" must be an object, "backgroundOverlay" at position 0 fails because [child "color" fails because ["color" is required]]]');
@@ -413,48 +573,76 @@ describe('FfmpegCommandService', function() {
             });
 
             describe('Invalid imageOverlay inputs', function() {
-                it('imageOverlay.filePath must be provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "filePath" fails because ["filePath" is required], "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
+                it('imageOverlay array must contain at least one item', function() {
+                    validateCommonSchemaError({ imageOverlay: [] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" must contain at least 1 items]');
                 });
 
                 it('imageOverlay.filePath must be provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'unknownfile.png', fadeIn: { startTime: 1, duration: 1 } } }, `imageOverlay file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.png')}" does not exist.`);
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'unknownfile.png', fadeIn: { startTime: 1, duration: 1 } }] }, `imageOverlay file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.png')}" does not exist.`);
+                    validateCommonSchemaError({ imageOverlay: { xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "filePath" fails because ["filePath" is required], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
+                });
+
+                it('imageOverlay.filePath must exist as an actual file', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'unknownfile.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, `imageOverlay file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.png')}" does not exist.`);
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'unknownfile.png', xLoc: 0, yLoc: 0,fadeIn: { startTime: 1, duration: 1 } }] }, `imageOverlay file "${Path.resolve(__dirname,'fixtures/assets1/unknownfile.png')}" does not exist.`);
+                });
+
+                it('imageOverlay.xLoc must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "xLoc" fails because ["xLoc" is required], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', yLoc: 0, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "xLoc" fails because ["xLoc" is required]]]');
+                });
+
+                it('imageOverlay.xLoc must be an integer', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 20.2, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "xLoc" fails because ["xLoc" must be an integer], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 30.1, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "xLoc" fails because ["xLoc" must be an integer]]]');
+                });
+
+                it('imageOverlay.yLoc must be provided', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "yLoc" fails because ["yLoc" is required], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "yLoc" fails because ["yLoc" is required]]]');
+                });
+
+                it('imageOverlay.yLoc must be an integer', function() {
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, yLoc: -10.1, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "yLoc" fails because ["yLoc" must be an integer], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, yLoc: 500.2, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "yLoc" fails because ["yLoc" must be an integer]]]');
                 });
 
                 it('imageOverlay.fadeIn must be provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png' } }, 'child "imageOverlay" fails because [child "fadeIn" fails because ["fadeIn" is required], "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png' }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because ["fadeIn" is required]]]');
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, yLoc: 0 } }, 'child "imageOverlay" fails because [child "fadeIn" fails because ["fadeIn" is required], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, yLoc: 0 }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because ["fadeIn" is required]]]');
                 });
 
                 it('imageOverlay.fadeIn.startTime must be provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { duration: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { duration: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
                 });
 
                 it('imageOverlay.fadeIn.duration must be provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { startTime: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { startTime: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
                 });
 
                 it('imageOverlay.fadeOut.startTime must be provided if fadeOut is provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { duration: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { duration: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "startTime" fails because ["startTime" is required]]]]');
                 });
 
                 it('imageOverlay.fadeOut.duration must be provided if fadeOut is provided', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', fadeIn: { startTime: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', fadeIn: { startTime: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1 } } }, 'child "imageOverlay" fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]], "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "fadeIn" fails because [child "duration" fails because ["duration" is required]]]]');
                 });
 
                 it('imageOverlay has unknown property', function() {
-                    validateCommonSchemaError({ imageOverlay: { badProperty: true, filePath: 'logo.png', fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because ["badProperty" is not allowed, "imageOverlay" must be an array]');
-                    validateCommonSchemaError({ imageOverlay: [{ badProperty: true, filePath: 'logo.png', fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because ["badProperty" is not allowed]]');
+                    validateCommonSchemaError({ imageOverlay: { badProperty: true, filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because ["badProperty" is not allowed, "imageOverlay" must be an array]');
+                    validateCommonSchemaError({ imageOverlay: [{ badProperty: true, filePath: 'logo.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because ["badProperty" is not allowed]]');
                 });
             });
 
             describe('Invalid textOverlay inputs', function() {
+                it('textOverlay array must contain at least one item', function() {
+                    validateCommonSchemaError({ textOverlay: [] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" must contain at least 1 items]');
+                });
+
                 it('textOverlay.text must be provided', function() {
                     validateCommonSchemaError({ textOverlay: {fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "text" fails because ["text" is required], "textOverlay" must be an array]');
                     validateCommonSchemaError({ textOverlay: [{fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "text" fails because ["text" is required]]]');
