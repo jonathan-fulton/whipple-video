@@ -131,9 +131,9 @@ const ffmpegCommand = ffmpegCommandService.createFfmpegCommand({
     workingDirectory: '...'
 });
 ```
-As you can see, there are five primary inputs that allow you to customize the content of the output video: video, audio, backgroundOverlay, imageOverlay, and textOverlay.  Each of these have a well-defined schema that we'll review shortly. You can provide either a single object or an array of these objects for each parameter.
+As you can see, there are five primary inputs that allow you to customize the content of the output video: `video`, `audio`, `backgroundOverlay`, `imageOverlay`, and `textOverlay`.  Each of these have a well-defined schema that we'll review shortly. You can provide either a single object or an array of these objects for each parameter.  There are also two additional parameters:  `output` and `workingDirectory`.  Details on each of these below.
 
-## video - WhippleCommandVideo
+## video
 
 Here's an example video input object:
 
@@ -177,16 +177,101 @@ const partialInputObj = {
 
 Note that when multiple videos are provided in the array format, they are concatenated together.
 
-Documentation for each parameter:
+Here's the JSDoc specification:
 
-`filePath` - Required string. Includes the file extension.  Relative to `workingDirectory` if provided on the overall input object.
+```javascript
+/**
+ * @name WhippleCommandVideo
+ * @type Object
+ * @property {string} filePath - include the extension, e.g., .mov .mp4
+ * @property {number} [trimStart] - in seconds; must be between 0 and 600. Effectively defaults to 0 if not provided.
+ * @property {number} [trimDuration] - in seconds; must be between 0 and 600. Effectively defaults to smaller of 600 or time remaining in input video if not provided.
+ * @property {WhippleCommandDimensions} [dimensions]
+ */
 
-`dimensions` - Required object with `width` and `height` integer properties. Doesn't affect output at the moment, merely future-proofing the API.
-
-`trimStart` - Optional number. Number of seconds into the video to start trimming. Defaults to 0.  Must be between 0 and 600.
-
-`trimDuration` - Optional number. Duration of the trimmed video. Defaults to 600 though will be cut off at end of input video if shorter than 600 seconds.  Must be between 0 and 600.
-
+/**
+ * @name WhippleCommandDimensions
+ * @property {int} width - in pixels
+ * @property {int} height - in pixels
+ */
 ```
-ffmpeg -i sample.mp4 -i sample2.mp4 -i music.mp3 -i music2.mp3 -loop 1 -i logo.png  -f lavfi -i anullsrc -f lavfi -i color=c=black:size=1920x1080 -filter_complex "[0:v] trim=start=4:duration=10,setpts=PTS-STARTPTS [v1]; [1:v] trim=start=4:duration=10,setpts=PTS-STARTPTS [v2]; [v1] [v2] concat=n=2:v=1:a=0 [v_concat]; [6:v] format=yuva420p, colorchannelmixer=aa=0.6 [overlay]; [overlay] fade=t=in:st=15:d=2:alpha=1 [overlay_fade]; [v_concat] [overlay_fade] overlay=shortest=1 [v_overlay]; [v_overlay] drawtext=text='Hello World':enable=1:x=800:y=450:fontsize=60:fontfile=/System/Library/Fonts/HelveticaNeueDeskInterface.ttc:fontcolor_expr=ffffff%{eif\\\\: clip(255*(1*between(t\\, 1.0 + 1.0\\, 6.0 - 1.0) + ((t - 1.0)/1.0)*between(t\\, 1.0\\, 1.0 + 1.0) + (-(t - 6.0)/1.0)*between(t\\, 6.0 - 1.0\\, 6.0) )\\, 0\\, 255) \\\\: x\\\\: 2 } [v_text]; [4:v] fade=t=in:st=16:d=1:alpha=1 [logo]; [v_text] [logo] overlay=x=900:y=450:shortest=1 [v_logo]" -map "[v_logo]" output.mp4
+
+## audio
+
+```javascript
+/**
+ * @name WhippleCommandAudio
+ * @type Object
+ * @property {string} filePath
+ * @property {number} [trimStart] - in seconds; must be between 0 and 600. Effectively defaults to 0 if not provided.
+ * @property {number} [trimDuration] - in seconds; must be between 0 and 600. Effectively defaults to smaller of 600 or time remaining in input audio if not provided.
+ */
 ```
+
+## backgroundOverlay
+
+```javascript
+/**
+ * @name WhippleCommandBackgroundOverlay
+ * @type Object
+ * @property {string} color - hex code
+ * @property {number} alpha - alpha channel value between 0 and 1
+ * @property {WhippleCommandDimensions} dimensions
+ * @property {WhippleCommandFadeEffect} fadeIn
+ * @property {WhippleCommandFadeEffect} [fadeOut]
+ */
+
+/**
+ * @name WhippleCommandFadeEffect
+ * @property {number} startTime - in seconds
+ * @property {number} duration - in seconds
+ */
+```
+
+## imageOverlay
+
+```javascript
+/**
+ * @name WhippleCommandImageOverlay
+ * @type Object
+ * @property {string} filePath
+ * @property {int} xLoc - # of pixels to the right of the upper left corner relative to original video inputs
+ * @property {int} yLoc - # of pixels below the upper left corner relative to original video inputs
+ * @property {WhippleCommandFadeEffect} fadeIn
+ * @property {WhippleCommandFadeEffect} [fadeOut]
+ */
+```
+
+## textOverlay
+
+```javascript
+/**
+ * @name WhippleCommandTextOverlay
+ * @type Object
+ * @property {string} text
+ * @property {string} fontName - should correspond to one of the font names in service configuration
+ * @property {number} fontSize - in pixels
+ * @property {string} fontColor - hex
+ * @property {number} fontAlpha - alpha for fontColor when fully faded in
+ * @property {int} xLoc - # of pixels to the right of the upper left corner relative to original video inputs
+ * @property {int} yLoc - # of pixels below the upper left corner relative to original video inputs
+ * @property {WhippleCommandFadeEffect} fadeIn
+ * @property {WhippleCommandFadeEffect} [fadeOut]
+ */
+```
+
+## output
+
+```javascript
+/**
+ * @name WhippleCommandOutput
+ * @type {Object}
+ * @property {string} filePath
+ * @property {boolean} [includeMoovAtomAtFront=true] - enables video streaming by putting MOOV metadata at front of file
+ * @property {WhippleCommandDimensions} [dimensions] - if not provided will implicitly default to input video dims
+ */
+```
+
+## workingDirectory
+
+String.  audio/video/output filePath's relative to this directory. 
