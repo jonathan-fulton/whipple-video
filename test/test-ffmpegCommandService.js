@@ -753,6 +753,41 @@ describe('FfmpegCommandService', function() {
 
             });
 
+            it('Should work with additional keys if strict mode is disabled', function() {
+                const command = ffmpegCommandService.createFfmpegCommand({
+                    video: {
+                        title: 'test', // This is an ignored key
+                        filePath: 'sample.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    backgroundOverlay: {
+                        color: 'aaaaaa',
+                        alpha: 0.6,
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        },
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 1
+                        }
+                    },
+                    output: {
+                        filePath: 'output.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                }, true);
+
+                Should(command).eql('/usr/local/bin/ffmpeg -i ' + __dirname + '/fixtures/assets1/sample.mp4 -f lavfi -i color=c=aaaaaa:size=1920x1080 -filter_complex " [0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; [v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1 [v_overlay_0_fade]; [v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]" -map "[v_overlay_0]" -y ' + __dirname + '/fixtures/assets1/output.mp4');
+            });
+
         });
 
     })
