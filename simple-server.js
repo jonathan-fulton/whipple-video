@@ -55,64 +55,38 @@ const requestHandler = (request, response) => {
                 workingDirectory: Path.resolve(__dirname, './test/fixtures/assets1')
             });
 
-            async.map(options.video, (video, callback) => {
-                if (video.filePath.indexOf('https://') !== -1) {
-                    const fullUrl = video.filePath;
-                    console.log('Found url: ' + fullUrl);
+            async.map(options.audio, handleMediaList, (err, results) => {
+                options.audio = results;
 
-                    const parsed = url.parse(fullUrl);
-                    const filename = Path.basename(parsed.pathname);
-                    const destPath = Path.resolve(__dirname, './test/fixtures/assets1', filename);
+                async.map(options.video, handleMediaList, (err, results) => {
+                    options.video = results;
 
-                    video.filePath = filename;
+                    try {
+                        const command = ffmpegCommandService.createFfmpegCommand(options, true);
+                        console.log(command);
 
-                    if (!fs.existsSync(destPath)) {
-                        console.log('Saving to: ' + destPath);
+                        console.log('Starting to encode!');
+                        
+                        exec(command, (err, stdout, stderr) => {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
 
-                        const file = fs.createWriteStream(destPath);
-                        const request = https.get(fullUrl, response => {
-                            response.pipe(file);
-                            response.on('end', () => {
-                                console.log('Done downloading!')
-                                callback(null, video)
-                            });
+                            // the *entire* stdout and stderr (buffered)
+                            console.log(`stdout: ${stdout}`);
+                            console.log(`stderr: ${stderr}`);
+
+                            response.writeHead(200, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
+                            response.end(JSON.stringify({ message: 'Success!', command }));
+
+                            exec('open /Users/mathiashansen/Projects/whipple-video/test/fixtures/assets1/output.mp4');
                         });
-
-                    } else {
-                        console.log('Using cache: ' + destPath)
-                        callback(null, video)
+                    } catch (err) {
+                        response.writeHead(400, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
+                        response.end(JSON.stringify({ message: err.message }));
                     }
-                } else {
-                    callback(null, video);
-                }
-            }, (err, results) => {
-                options.video = results;
-
-                try {
-                    const command = ffmpegCommandService.createFfmpegCommand(options, true);
-                    console.log(command);
-
-                    console.log('Starting to encode!');
-                    
-                    exec(command, (err, stdout, stderr) => {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-
-                        // the *entire* stdout and stderr (buffered)
-                        console.log(`stdout: ${stdout}`);
-                        console.log(`stderr: ${stderr}`);
-
-                        response.writeHead(200, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
-                        response.end(JSON.stringify({ message: 'Success!', command }));
-
-                        exec('open /Users/mathiashansen/Projects/whipple-video/test/fixtures/assets1/output.mp4');
-                    });
-                } catch (err) {
-                    response.writeHead(400, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
-                    response.end(JSON.stringify({ message: err.message }));
-                }
+                });
             });
         });
     } else {
@@ -121,6 +95,38 @@ const requestHandler = (request, response) => {
     }
 
     console.log(request.url);
+}
+
+function handleMediaList(media, callback) {
+    if (media.filePath.indexOf('https://') !== -1) {
+        const fullUrl = media.filePath;
+        console.log('Found url: ' + fullUrl);
+
+        const parsed = url.parse(fullUrl);
+        const filename = Path.basename(parsed.pathname);
+        const destPath = Path.resolve(__dirname, './test/fixtures/assets1', filename);
+
+        media.filePath = filename;
+
+        if (!fs.existsSync(destPath)) {
+            console.log('Saving to: ' + destPath);
+
+            const file = fs.createWriteStream(destPath);
+            const request = https.get(fullUrl, response => {
+                response.pipe(file);
+                response.on('end', () => {
+                    console.log('Done downloading!')
+                    callback(null, media)
+                });
+            });
+
+        } else {
+            console.log('Using cache: ' + destPath)
+            callback(null, media)
+        }
+    } else {
+        callback(null, media);
+    }
 }
 
 const server = http.createServer(requestHandler)
