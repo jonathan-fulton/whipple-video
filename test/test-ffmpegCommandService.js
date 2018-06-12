@@ -462,10 +462,6 @@ describe('FfmpegCommandService', function() {
             });
 
             describe('Invalid backgroundOverlay inputs', function() {
-                it('backgroundOverlay array must contain at least one item', function() {
-                    validateCommonSchemaError({ backgroundOverlay: [] }, 'child "backgroundOverlay" fails because ["backgroundOverlay" must be an object, "backgroundOverlay" must contain at least 1 items]');
-                });
-
                 it('backgroundOverlay.color must be provided', function() {
                     validateCommonSchemaError({ backgroundOverlay: { alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 } } }, 'child "backgroundOverlay" fails because [child "color" fails because ["color" is required], "backgroundOverlay" must be an array]');
                     validateCommonSchemaError({ backgroundOverlay: [{ alpha: 0.6, dimensions: {width: 1920, height: 1080}, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "backgroundOverlay" fails because ["backgroundOverlay" must be an object, "backgroundOverlay" at position 0 fails because [child "color" fails because ["color" is required]]]');
@@ -573,10 +569,6 @@ describe('FfmpegCommandService', function() {
             });
 
             describe('Invalid imageOverlay inputs', function() {
-                it('imageOverlay array must contain at least one item', function() {
-                    validateCommonSchemaError({ imageOverlay: [] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" must contain at least 1 items]');
-                });
-
                 it('imageOverlay.filePath must be provided', function() {
                     validateCommonSchemaError({ imageOverlay: { xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, 'child "imageOverlay" fails because [child "filePath" fails because ["filePath" is required], "imageOverlay" must be an array]');
                     validateCommonSchemaError({ imageOverlay: [{ xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } }] }, 'child "imageOverlay" fails because ["imageOverlay" must be an object, "imageOverlay" at position 0 fails because [child "filePath" fails because ["filePath" is required]]]');
