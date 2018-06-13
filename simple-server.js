@@ -55,37 +55,42 @@ const requestHandler = (request, response) => {
                 workingDirectory: Path.resolve(__dirname, './test/fixtures/assets1')
             });
 
+            // TODO: Yes, this is super duper ugly
             async.map(options.audio, handleMediaList, (err, results) => {
                 options.audio = results;
 
                 async.map(options.video, handleMediaList, (err, results) => {
                     options.video = results;
 
-                    try {
-                        const command = ffmpegCommandService.createFfmpegCommand(options, true);
-                        console.log(command);
+                    async.map(options.imageOverlay, handleMediaList, (err, results) => {
+                        options.imageOverlay = results;
 
-                        console.log('Starting to encode!');
-                        
-                        exec(command, (err, stdout, stderr) => {
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
+                        try {
+                            const command = ffmpegCommandService.createFfmpegCommand(options, true);
+                            console.log(command);
 
-                            // the *entire* stdout and stderr (buffered)
-                            console.log(`stdout: ${stdout}`);
-                            console.log(`stderr: ${stderr}`);
+                            console.log('Starting to encode!');
+                            
+                            exec(command, (err, stdout, stderr) => {
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
 
-                            response.writeHead(200, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
-                            response.end(JSON.stringify({ message: 'Success!', command }));
+                                // the *entire* stdout and stderr (buffered)
+                                console.log(`stdout: ${stdout}`);
+                                console.log(`stderr: ${stderr}`);
 
-                            exec('open /Users/mathiashansen/Projects/whipple-video/test/fixtures/assets1/output.mp4');
-                        });
-                    } catch (err) {
-                        response.writeHead(400, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
-                        response.end(JSON.stringify({ message: err.message }));
-                    }
+                                response.writeHead(200, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
+                                response.end(JSON.stringify({ message: 'Success!', command }));
+
+                                exec('open /Users/mathiashansen/Projects/whipple-video/test/fixtures/assets1/output.mp4');
+                            });
+                        } catch (err) {
+                            response.writeHead(400, Object.assign({'Content-Type': 'application/json'}, corsHeaders));
+                            response.end(JSON.stringify({ message: err.message }));
+                        }
+                    });
                 });
             });
         });
