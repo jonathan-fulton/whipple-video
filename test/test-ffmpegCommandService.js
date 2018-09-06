@@ -794,7 +794,7 @@ describe('FfmpegCommandService', function() {
     })
 
     describe('createFfmpegOptions', function () {
-        it('Should work with a video and an audio object provided', function() {
+        it('Should work with a video and an audio object provided and without an output object', function() {
             const options = ffmpegCommandService.createFfmpegOptions({
                 video: {
                     filePath: 'sample.mp4',
@@ -809,13 +809,6 @@ describe('FfmpegCommandService', function() {
                     filePath: 'music.mp3',
                     trimStart: 0,
                     trimDuration: 10
-                },
-                output: {
-                    filePath: 'output.mp4',
-                    dimensions: {
-                        width: 1920,
-                        height: 1080
-                    }
                 },
                 workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
             });
