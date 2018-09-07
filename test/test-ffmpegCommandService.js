@@ -821,6 +821,33 @@ describe('FfmpegCommandService', function() {
             Should(options.filterComplex.filter).eql("[0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]");
             Should(options.filterComplex.maps).eql(['v_concat', 'a_concat']);
         });
+
+        it('Should allow URL\'s instead of filenames when a working directory is not specified', function() {
+            const options = ffmpegCommandService.createFfmpegOptions({
+                video: {
+                    filePath: 'https://example.com/sample.mp4',
+                    dimensions: {
+                        width: 1920,
+                        height: 1080
+                    },
+                    trimStart: 0,
+                    trimDuration: 10
+                },
+                audio: {
+                    filePath: 'https://example.com/music.mp3',
+                    trimStart: 0,
+                    trimDuration: 10
+                },
+            });
+
+            Should(options.inputs).eql([
+                { type: 'video', input: 'https://example.com/sample.mp4' },
+                { type: 'audio', input: 'https://example.com/music.mp3' }
+            ]);
+
+            Should(options.filterComplex.filter).eql("[0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]");
+            Should(options.filterComplex.maps).eql(['v_concat', 'a_concat']);
+        });
     })
 
 });
