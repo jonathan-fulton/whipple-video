@@ -189,6 +189,123 @@ describe('FfmpegCommandService', function() {
                 Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
             });
 
+            it('Should support horizontal text alignment via xLoc', function() {
+                const command = ffmpegCommandService.createFfmpegCommand({
+                    video: {
+                        filePath: 'sample.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    textOverlay: {
+                        text: 'Hello, world!',
+                        fontName: 'Avenir',
+                        fontSize: 50,
+                        fontColor: 'ffffff',
+                        fontAlpha: 1,
+                        xLoc: 'center',
+                        yLoc: 600,
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 1
+                        },
+                        fadeOut: {
+                            startTime: 10,
+                            duration: 1
+                        },
+                    },
+                    output: {
+                        filePath: 'output.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                });
+
+                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=(main_w/2-text_w/2):y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+            });
+
+            it('Should support horizontal and vertical text alignment', function() {
+                const command = ffmpegCommandService.createFfmpegCommand({
+                    video: {
+                        filePath: 'sample.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    textOverlay: {
+                        text: 'Hello, world!',
+                        fontName: 'Avenir',
+                        fontSize: 50,
+                        fontColor: 'ffffff',
+                        fontAlpha: 1,
+                        xLoc: 'center',
+                        yLoc: 'center',
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 1
+                        },
+                        fadeOut: {
+                            startTime: 10,
+                            duration: 1
+                        },
+                    },
+                    output: {
+                        filePath: 'output.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                });
+
+                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=(main_w/2-text_w/2):y=(main_h/2-text_h/2):fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+            });
+
+            it('Should support vertical bottom text alignment', function() {
+                const command = ffmpegCommandService.createFfmpegCommand({
+                    video: {
+                        filePath: 'sample.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    textOverlay: {
+                        text: 'Hello, world!',
+                        fontName: 'Avenir',
+                        fontSize: 50,
+                        fontColor: 'ffffff',
+                        fontAlpha: 1,
+                        xLoc: 600,
+                        yLoc: 'bottom',
+                        fadeIn: {
+                            startTime: 5,
+                            duration: 1
+                        },
+                        fadeOut: {
+                            startTime: 10,
+                            duration: 1
+                        },
+                    },
+                    output: {
+                        filePath: 'output.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                });
+
+                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=main_h-text_h:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+            });
+
             it('Should work with multiple values provided for each command property', function() {
                 const command = ffmpegCommandService.createFfmpegCommand({
                     video: [{
@@ -728,6 +845,11 @@ describe('FfmpegCommandService', function() {
                 it('textOverlay.fadeOut.duration must be provided if fadeOut provided', function() {
                     validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { startTime: 1 } } }, 'child "textOverlay" fails because [child "fadeOut" fails because [child "duration" fails because ["duration" is required]], "textOverlay" must be an array]');
                     validateCommonSchemaError({ textOverlay: [{text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 400, fadeIn: { startTime: 1, duration: 1 }, fadeOut: { startTime: 1 } }] }, 'child "textOverlay" fails because ["textOverlay" must be an object, "textOverlay" at position 0 fails because [child "fadeOut" fails because [child "duration" fails because ["duration" is required]]]]');
+                });
+
+                it('textOverlay.xLoc text alignment value has to be valid', function() {
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 'wrong', yLoc: 'wrong', fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "xLoc" fails because ["xLoc" must be a number], "textOverlay" must be an array]');
+                    validateCommonSchemaError({ textOverlay: {text: 'Hello, world', fontName: 'Avenir', fontSize: 40, fontColor: 'ffffff', fontAlpha: 1.0, xLoc: 400, yLoc: 'wrong', fadeIn: { startTime: 1, duration: 1 } } }, 'child "textOverlay" fails because [child "yLoc" fails because ["yLoc" must be a number], "textOverlay" must be an array]');
                 });
             });
 
