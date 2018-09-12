@@ -145,6 +145,30 @@ describe('FfmpegCommandServiceFactory', function() {
 
         });
 
+        it('Should throw an error if fonts.defaultMargin is not a number', function() {
+
+            let actualErr;
+            try {
+                const ffmpegCommandService = FfmpegCommandServiceFactory.create({
+                    pathToFfmpegBin: '/usr/local/bin/ffmpeg'
+                },{
+                    fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
+                    fonts: [{
+                        name: 'Avenir',
+                        fontFilePath: 'Avenir.ttc'
+                    }],
+                    defaultMargin: 'notANumber'
+                });
+            } catch(e) {
+                actualErr = e;
+            }
+
+            Should(actualErr).be.an.instanceOf(Error);
+            Should(actualErr.isJoi).be.true();
+            Should(actualErr.message).eql('child "defaultMargin" fails because ["defaultMargin" must be a number]');
+
+        });
+
     })
 
 });
