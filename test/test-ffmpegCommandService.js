@@ -25,7 +25,6 @@ describe('FfmpegCommandService', function() {
     });
 
 
-
     describe('createFfmpegCommand', function() {
 
         describe('Valid inputs', function() {
@@ -303,7 +302,7 @@ describe('FfmpegCommandService', function() {
                     workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=main_h-text_h:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=main_h-text_h-50:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]" -map "[v_text]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
             });
 
             it('Should work with multiple values provided for each command property', function() {
