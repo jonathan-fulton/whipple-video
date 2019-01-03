@@ -80,6 +80,58 @@ describe('FfmpegCommandService', function() {
                 Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -filter_complex "[0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]; [v_concat] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -map "[a_concat]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
             });
 
+            it('Should work with a video and several audio layers provided', function() {
+                const command = ffmpegCommandService.createFfmpegCommand({
+                    video: {
+                        filePath: 'sample.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        },
+                        trimStart: 0,
+                        trimDuration: 10
+                    },
+                    audio: [{
+                        filePath: 'music.mp3',
+                        trimStart: 0,
+                        trimDuration: 2,
+                        layer: 0
+                    },{
+                        filePath: 'music.mp3',
+                        trimStart: 2,
+                        trimDuration: 2,
+                        layer: 0
+                    },{
+                        filePath: 'music.mp3',
+                        trimStart: 4,
+                        trimDuration: 2,
+                        paddingDuration: 4,
+                        layer: 1
+                    },{
+                        filePath: 'music.mp3',
+                        trimStart: 6,
+                        trimDuration: 2,
+                        layer: 1
+                    },{
+                        filePath: 'music.mp3',
+                        trimStart: 8,
+                        trimDuration: 2,
+                        paddingDuration: 8,
+                        layer: 2
+                    }],
+                    output: {
+                        filePath: 'output.mp4',
+                        dimensions: {
+                            width: 1920,
+                            height: 1080
+                        }
+                    },
+                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                });
+
+                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -filter_complex "aevalsrc=0:d=4 [a2_padding]; aevalsrc=0:d=8 [a4_padding]; [0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=2, asetpts=PTS-STARTPTS [a0]; [2:a] atrim=start=2:duration=2, asetpts=PTS-STARTPTS [a1]; [3:a] atrim=start=4:duration=2, asetpts=PTS-STARTPTS [a2]; [4:a] atrim=start=6:duration=2, asetpts=PTS-STARTPTS [a3]; [5:a] atrim=start=8:duration=2, asetpts=PTS-STARTPTS [a4]; [a0] [a1] concat=n=2:v=0:a=1 [a_concat_0]; [a2_padding] [a2] [a3] concat=n=3:v=0:a=1 [a_concat_1]; [a4_padding] [a4] concat=n=2:v=0:a=1 [a_concat_2]; [a_concat_0] [a_concat_1] [a_concat_2] amix=inputs=3:duration=longest [a_final_output]; [v_concat] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -map "[a_final_output]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+            });
+
             it('Should work with a video and a backgroundOverlay object provided', function() {
                 const command = ffmpegCommandService.createFfmpegCommand({
                     video: {
