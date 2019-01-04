@@ -201,6 +201,45 @@ describe('FfmpegCommandService', function() {
                 Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -loop 1 -i ' + Path.resolve(__dirname, './fixtures/assets1/logo.png') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; [v_concat] [v_image_0_layer] overlay=x=500:y=400:shortest=1 [v_image_0]; [v_image_0] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
             });
 
+            it('Should escape single quotes', function() {
+              const command = ffmpegCommandService.createFfmpegCommand({
+                video: {
+                  filePath: 'sample.mp4',
+                  dimensions: {
+                    width: 1920,
+                    height: 1080
+                  }
+                },
+                textOverlay: {
+                  text: `Hello, 'world"!`,
+                  fontName: 'Avenir',
+                  fontSize: 50,
+                  fontColor: 'ffffff',
+                  fontAlpha: 1,
+                  xLoc: 600,
+                  yLoc: 600,
+                  fadeIn: {
+                    startTime: 5,
+                    duration: 1
+                  },
+                  fadeOut: {
+                    startTime: 10,
+                    duration: 1
+                  },
+                },
+                output: {
+                  filePath: 'output.mp4',
+                  dimensions: {
+                    width: 1920,
+                    height: 1080
+                  }
+                },
+                workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+              });
+
+              Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, \\\'world\\"\\!\':x=600:y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [v_text] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+            });
+
             it('Should work with a video and a textOverlay object provided', function() {
                 const command = ffmpegCommandService.createFfmpegCommand({
                     video: {
