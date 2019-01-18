@@ -5,6 +5,10 @@ const Path = require('path');
 
 const FfmpegCommandServiceFactory = require('../lib/ffmpegCommandServiceFactory');
 
+function _path(uri) {
+    return Path.resolve(__dirname, uri);
+}
+
 describe('FfmpegCommandService', function() {
     /** @var {FfmpegCommandService} */
     let ffmpegCommandService;
@@ -13,7 +17,7 @@ describe('FfmpegCommandService', function() {
         ffmpegCommandService = FfmpegCommandServiceFactory.create({
             pathToFfmpegBin: '/usr/local/bin/ffmpeg'
         }, {
-            fontsDirectory: Path.resolve(__dirname, './fixtures/fonts1'),
+            fontsDirectory: _path('./fixtures/fonts1'),
             fonts: [{
                 name: 'Avenir',
                 fontFilePath: 'Avenir.ttc'
@@ -45,10 +49,23 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    '-i ' + _path('./fixtures/assets1/sample.mp4') +
+                    ' -filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS ' +
+                    '[v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]' +
+                    '" ' +
+                    '-map "[v_concat]" ' +
+                    '-y ' + _path('./fixtures/assets1/output.mp4');
+
+                Should(command).eql(expected);
             });
 
             it('Should work with a video and an audio object provided', function() {
@@ -74,10 +91,26 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -filter_complex "[0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]; [v_concat] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -map "[a_concat]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; ' +
+                    '[a0] concat=n=1:v=0:a=1 [a_concat]' +
+                    '" ' +
+                    '-map "[v_concat]" ' +
+                    '-map "[a_concat]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should work with a video and several audio layers provided', function() {
@@ -126,10 +159,38 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -filter_complex "aevalsrc=0:d=4 [a2_padding]; aevalsrc=0:d=8 [a4_padding]; [0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=2, asetpts=PTS-STARTPTS [a0]; [2:a] atrim=start=2:duration=2, asetpts=PTS-STARTPTS [a1]; [3:a] atrim=start=4:duration=2, asetpts=PTS-STARTPTS [a2]; [4:a] atrim=start=6:duration=2, asetpts=PTS-STARTPTS [a3]; [5:a] atrim=start=8:duration=2, asetpts=PTS-STARTPTS [a4]; [a0] [a1] concat=n=2:v=0:a=1 [a_concat_0]; [a2_padding] [a2] [a3] concat=n=3:v=0:a=1 [a_concat_1]; [a4_padding] [a4] concat=n=2:v=0:a=1 [a_concat_2]; [a_concat_0] [a_concat_1] [a_concat_2] amix=inputs=3:duration=longest [a_final_output]; [v_concat] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -map "[a_final_output]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    '-filter_complex "' +
+                    'aevalsrc=0:d=4 [a2_padding]; aevalsrc=0:d=8 [a4_padding]; ' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[1:a] atrim=start=0:duration=2, asetpts=PTS-STARTPTS [a0]; ' +
+                    '[2:a] atrim=start=2:duration=2, asetpts=PTS-STARTPTS [a1]; ' +
+                    '[3:a] atrim=start=4:duration=2, asetpts=PTS-STARTPTS [a2]; ' +
+                    '[4:a] atrim=start=6:duration=2, asetpts=PTS-STARTPTS [a3]; ' +
+                    '[5:a] atrim=start=8:duration=2, asetpts=PTS-STARTPTS [a4]; ' +
+                    '[a0] [a1] concat=n=2:v=0:a=1 [a_concat_0]; ' +
+                    '[a2_padding] [a2] [a3] concat=n=3:v=0:a=1 [a_concat_1]; ' +
+                    '[a4_padding] [a4] concat=n=2:v=0:a=1 [a_concat_2]; ' +
+                    '[a_concat_0] [a_concat_1] [a_concat_2] amix=inputs=3:duration=longest [a_final_output]' +
+                    '" ' +
+                    '-map "[v_concat]" ' +
+                    '-map "[a_final_output]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should work with a video and a backgroundOverlay object provided', function() {
@@ -160,10 +221,26 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -f lavfi -i color=c=aaaaaa:size=1920x1080 -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; [v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1 [v_overlay_0_fade]; [v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]; [v_overlay_0] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    '-f lavfi -i color=c=aaaaaa:size=1920x1080 ' +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[1:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; ' +
+                    '[v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1 [v_overlay_0_fade]; ' +
+                    '[v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]' +
+                    '" ' +
+                    '-map "[v_overlay_0]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should work with a video and an imageOverlay object provided', function() {
@@ -195,10 +272,25 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -loop 1 -i ' + Path.resolve(__dirname, './fixtures/assets1/logo.png') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; [v_concat] [v_image_0_layer] overlay=x=500:y=400:shortest=1 [v_image_0]; [v_image_0] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    `-loop 1 -i ${_path('./fixtures/assets1/logo.png')} ` +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[1] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; ' +
+                    '[v_concat] [v_image_0_layer] overlay=x=500:y=400:shortest=1 [v_image_0]' +
+                    '" ' +
+                    '-map "[v_image_0]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should escape single quotes', function() {
@@ -234,10 +326,25 @@ describe('FfmpegCommandService', function() {
                     height: 1080
                   }
                 },
-                workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                workingDirectory: _path('./fixtures/assets1')
               });
 
-              Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, \\\'world\\"\\!\':x=600:y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [v_text] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+              const expected = '/usr/local/bin/ffmpeg ' +
+                  `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                  '-filter_complex "' +
+                  '[0:v] ' +
+                  'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                  'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                  'trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; ' +
+                  '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                  '[v_concat] drawtext=enable=1:text=\'Hello, \u2019world\\"\\!\'' +
+                  ':x=600:y=600:fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') +
+                  ':fontsize=210.9375:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]' +
+                  '" ' +
+                  '-map "[v_text]" ' +
+                  `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+              Should(command).eql(expected);
             });
 
             it('Should work with a video and a textOverlay object provided', function() {
@@ -273,10 +380,26 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [v_text] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS ' +
+                    '[v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600' +
+                    ':fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') +
+                    ':fontsize=210.9375:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]' +
+                    '" ' +
+                    '-map "[v_text]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should support horizontal text alignment via xLoc', function() {
@@ -312,10 +435,25 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=(main_w/2-text_w/2):y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [v_text] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[v_concat] drawtext=enable=1:text=\'Hello, world\\!\'' +
+                    ':x=(main_w/2-text_w/2):y=600:fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') +
+                    ':fontsize=210.9375:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]' +
+                    '" ' +
+                    '-map "[v_text]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should support horizontal and vertical text alignment', function() {
@@ -351,10 +489,25 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=(main_w/2-text_w/2):y=(main_h/2-text_h/2):fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [v_text] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[v_concat] drawtext=enable=1:text=\'Hello, world\\!\'' +
+                    ':x=(main_w/2-text_w/2):y=(main_h/2-text_h/2):fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') +
+                    ':fontsize=210.9375:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]' +
+                    '" ' +
+                    '-map "[v_text]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should support vertical bottom text alignment', function() {
@@ -390,10 +543,25 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=main_h-text_h-50:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [v_text] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[v_concat] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=main_h-text_h-67.5' +
+                    ':fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') +
+                    ':fontsize=210.9375:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]' +
+                    '" ' +
+                    '-map "[v_text]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
             it('Should work with multiple values provided for each command property', function() {
@@ -525,10 +693,63 @@ describe('FfmpegCommandService', function() {
                             yLoc: 0
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 });
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/sample2.mp4') + ' -f lavfi -i color=c=555555:size=1920x1080 -f lavfi -i color=c=ff0000:size=1920x1080 -loop 1 -i ' +  Path.resolve(__dirname, './fixtures/assets1/logo.png') + ' -loop 1 -i ' + Path.resolve(__dirname, './fixtures/assets1/logo.png') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music.mp3') + ' -i ' + Path.resolve(__dirname, './fixtures/assets1/music2.mp3') + ' -filter_complex "color=ffffff:size=1920x1080:d=2 [v1_padding]; aevalsrc=0:d=3 [a1_padding]; [0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [1:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v1]; [v0] [v1_padding] [v1] concat=n=3:v=1:a=0 [v_concat]; [2:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; [v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1, fade=t=out:st=8:d=3:alpha=1 [v_overlay_0_fade]; [v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]; [3:v] format=yuva420p, colorchannelmixer=aa=0.7 [v_overlay_1_mixin]; [v_overlay_1_mixin] fade=t=in:st=14:d=1:alpha=1 [v_overlay_1_fade]; [v_overlay_0] [v_overlay_1_fade] overlay=shortest=1 [v_overlay_1]; [4] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; [v_overlay_1] [v_image_0_layer] overlay=x=300:y=400:shortest=1 [v_image_0]; [5] fade=t=in:st=15:d=2:alpha=1 [v_image_1_layer]; [v_image_0] [v_image_1_layer] overlay=x=1000:y=400:shortest=1 [v_image_1]; [v_image_1] drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=50:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 }, drawtext=enable=1:text=\'Go away\\!\':x=800:y=400:fontfile=' + Path.resolve(__dirname, './fixtures/fonts1/Avenir.ttc') + ':fontsize=75:fontcolor_expr=ff0000%{eif\\\\\\\\: clip(255*0.8*(1*between(t\\\\, 9\\\\, 15) + ((t - 7)/2)*between(t\\\\, 7\\\\, 9) + (-(t - 16)/1)*between(t\\\\, 15\\\\, 16) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } [v_text]; [6:a] atrim=start=0:duration=9, asetpts=PTS-STARTPTS [a0]; [7:a] atrim=start=0:duration=8, asetpts=PTS-STARTPTS [a1]; [a0] [a1_padding] [a1] concat=n=3:v=0:a=1 [a_concat]; [v_text] scale=1920:1080 [v_scaled]; [v_scaled] crop=540:1080:480:0 [v_cropped]" -map "[v_cropped]" -map "[a_concat]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                // Glad we have whipple for this...
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    `-i ${_path('./fixtures/assets1/sample2.mp4')} ` +
+                    '-f lavfi -i color=c=555555:size=1920x1080 ' +
+                    '-f lavfi -i color=c=ff0000:size=1920x1080 ' +
+                    '-loop 1 ' +
+                    `-i ${_path('./fixtures/assets1/logo.png')} ` +
+                    '-loop 1 ' +
+                    `-i ${_path('./fixtures/assets1/logo.png')} ` +
+                    `-i ${_path('./fixtures/assets1/music.mp3')} ` +
+                    `-i ${_path('./fixtures/assets1/music2.mp3')} ` +
+                    '-filter_complex "' +
+                        'color=ffffff:size=1920x1080:d=2 [v1_padding]; ' +
+                        'aevalsrc=0:d=3 [a1_padding]; ' +
+                        '[0:v] ' +
+                            'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                            'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                            'trim=start=0:duration=10, setpts=PTS-STARTPTS ' +
+                        '[v0]; ' +
+                        '[1:v] ' +
+                            'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                            'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                            'trim=start=0:duration=10, setpts=PTS-STARTPTS ' +
+                        '[v1]; ' +
+                        '[v0] [v1_padding] [v1] concat=n=3:v=1:a=0 [v_concat]; ' +
+                        '[2:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; ' +
+                        '[v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1, fade=t=out:st=8:d=3:alpha=1 [v_overlay_0_fade]; ' +
+                        '[v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]; ' +
+                        '[3:v] format=yuva420p, colorchannelmixer=aa=0.7 [v_overlay_1_mixin]; ' +
+                        '[v_overlay_1_mixin] fade=t=in:st=14:d=1:alpha=1 [v_overlay_1_fade]; ' +
+                        '[v_overlay_0] [v_overlay_1_fade] overlay=shortest=1 [v_overlay_1]; ' +
+                        '[4] fade=t=in:st=5:d=2:alpha=1, fade=t=out:st=10:d=1:alpha=1 [v_image_0_layer]; ' +
+                        '[v_overlay_1] [v_image_0_layer] overlay=x=300:y=400:shortest=1 [v_image_0]; ' +
+                        '[5] fade=t=in:st=15:d=2:alpha=1 [v_image_1_layer]; ' +
+                        '[v_image_0] [v_image_1_layer] overlay=x=1000:y=400:shortest=1 [v_image_1]; ' +
+                        '[v_image_1] ' +
+                            'drawtext=enable=1:text=\'Hello, world\\!\':x=600:y=600' +
+                                ':fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') + 
+                                ':fontsize=210.9375:fontcolor_expr=ffffff%{eif\\\\\\\\: clip(255*1*(1*between(t\\\\, 6\\\\, 10) + ((t - 5)/1)*between(t\\\\, 5\\\\, 6) + (-(t - 11)/1)*between(t\\\\, 10\\\\, 11) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 }, ' +
+                            'drawtext=enable=1:text=\'Go away\\!\':x=800:y=400' +
+                                ':fontfile=' + _path('./fixtures/fonts1/Avenir.ttc') + 
+                                ':fontsize=316.40625:fontcolor_expr=ff0000%{eif\\\\\\\\: clip(255*0.8*(1*between(t\\\\, 9\\\\, 15) + ((t - 7)/2)*between(t\\\\, 7\\\\, 9) + (-(t - 16)/1)*between(t\\\\, 15\\\\, 16) )\\\\, 0\\\\, 255) \\\\\\\\: x\\\\\\\\: 2 } ' +
+                        '[v_text]; ' +
+                        '[6:a] atrim=start=0:duration=9, asetpts=PTS-STARTPTS [a0]; ' +
+                        '[7:a] atrim=start=0:duration=8, asetpts=PTS-STARTPTS [a1]; ' +
+                        '[a0] [a1_padding] [a1] concat=n=3:v=0:a=1 [a_concat]; ' +
+                        '[v_text] crop=540:1080:480:0 [v_cropped]' +
+                    '" ' +
+                    '-map "[v_cropped]" ' +
+                    '-map "[a_concat]" ' +
+                    '-y ' + _path('./fixtures/assets1/output.mp4');
+
+                Should(command).eql(expected);
             })
         });
 
@@ -564,7 +785,7 @@ describe('FfmpegCommandService', function() {
                 }
 
                 if (!commandInput.workingDirectory) {
-                    commandInput.workingDirectory = Path.resolve(__dirname, './fixtures/assets1');
+                    commandInput.workingDirectory = _path('./fixtures/assets1');
                 }
 
                 // Validate input as an object
@@ -591,8 +812,8 @@ describe('FfmpegCommandService', function() {
                 });
 
                 it('video.filePath must exist as an actual file', function() {
-                    validateCommonSchemaError({ video: { filePath: 'unknownfile.mp4', dimensions: { width: 1920, height: 1080 } } }, `video file "${Path.resolve(__dirname, 'fixtures/assets1/unknownfile.mp4')}" does not exist.`);
-                    validateCommonSchemaError({ video: [{ filePath: 'unknownfile.mp4', dimensions: { width: 1920, height: 1080 } }] }, `video file "${Path.resolve(__dirname, 'fixtures/assets1/unknownfile.mp4')}" does not exist.`);
+                    validateCommonSchemaError({ video: { filePath: 'unknownfile.mp4', dimensions: { width: 1920, height: 1080 } } }, `video file "${_path('fixtures/assets1/unknownfile.mp4')}" does not exist.`);
+                    validateCommonSchemaError({ video: [{ filePath: 'unknownfile.mp4', dimensions: { width: 1920, height: 1080 } }] }, `video file "${_path('fixtures/assets1/unknownfile.mp4')}" does not exist.`);
                 });
 
                 it('video.dimensions must be provided', function() {
@@ -672,8 +893,8 @@ describe('FfmpegCommandService', function() {
                 });
 
                 it('audio.filePath must exist as an actual file', function() {
-                    validateCommonSchemaError({ audio: { filePath: 'unknownfile.mp3' } }, `audio file "${Path.resolve(__dirname, 'fixtures/assets1/unknownfile.mp3')}" does not exist.`);
-                    validateCommonSchemaError({ audio: [{ filePath: 'unknownfile.mp3' }] }, `audio file "${Path.resolve(__dirname, 'fixtures/assets1/unknownfile.mp3')}" does not exist.`);
+                    validateCommonSchemaError({ audio: { filePath: 'unknownfile.mp3' } }, `audio file "${_path('fixtures/assets1/unknownfile.mp3')}" does not exist.`);
+                    validateCommonSchemaError({ audio: [{ filePath: 'unknownfile.mp3' }] }, `audio file "${_path('fixtures/assets1/unknownfile.mp3')}" does not exist.`);
                 });
 
                 it('audio.trimStart must be a number between 0 and 600 (< 0 tested)', function() {
@@ -816,8 +1037,8 @@ describe('FfmpegCommandService', function() {
                 });
 
                 it('imageOverlay.filePath must exist as an actual file', function() {
-                    validateCommonSchemaError({ imageOverlay: { filePath: 'unknownfile.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, `imageOverlay file "${Path.resolve(__dirname, 'fixtures/assets1/unknownfile.png')}" does not exist.`);
-                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'unknownfile.png', xLoc: 0, yLoc: 0,fadeIn: { startTime: 1, duration: 1 } }] }, `imageOverlay file "${Path.resolve(__dirname, 'fixtures/assets1/unknownfile.png')}" does not exist.`);
+                    validateCommonSchemaError({ imageOverlay: { filePath: 'unknownfile.png', xLoc: 0, yLoc: 0, fadeIn: { startTime: 1, duration: 1 } } }, `imageOverlay file "${_path('fixtures/assets1/unknownfile.png')}" does not exist.`);
+                    validateCommonSchemaError({ imageOverlay: [{ filePath: 'unknownfile.png', xLoc: 0, yLoc: 0,fadeIn: { startTime: 1, duration: 1 } }] }, `imageOverlay file "${_path('fixtures/assets1/unknownfile.png')}" does not exist.`);
                 });
 
                 it('imageOverlay.xLoc must be provided', function() {
@@ -1040,18 +1261,36 @@ describe('FfmpegCommandService', function() {
                             height: 1080
                         }
                     },
-                    workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                    workingDirectory: _path('./fixtures/assets1')
                 }, true);
 
-                Should(command).eql('/usr/local/bin/ffmpeg -i ' + Path.resolve(__dirname, './fixtures/assets1/sample.mp4') + ' -f lavfi -i color=c=aaaaaa:size=1920x1080 -filter_complex "[0:v] trim=start=0:duration=600, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; [v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1 [v_overlay_0_fade]; [v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]; [v_overlay_0] scale=1920:1080 [v_scaled]" -map "[v_scaled]" -y ' + Path.resolve(__dirname, './fixtures/assets1/output.mp4'));
+                const expected = '/usr/local/bin/ffmpeg ' +
+                    `-i ${_path('./fixtures/assets1/sample.mp4')} ` +
+                    '-f lavfi -i color=c=aaaaaa:size=1920x1080 ' +
+                    '-filter_complex "' +
+                    '[0:v] ' +
+                    'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                    'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                    'trim=start=0:duration=600, setpts=PTS-STARTPTS ' +
+                    '[v0]; ' +
+                    '[v0] concat=n=1:v=1:a=0 [v_concat]; ' +
+                    '[1:v] format=yuva420p, colorchannelmixer=aa=0.6 [v_overlay_0_mixin]; ' +
+                    '[v_overlay_0_mixin] fade=t=in:st=5:d=1:alpha=1 [v_overlay_0_fade]; ' +
+                    '[v_concat] [v_overlay_0_fade] overlay=shortest=1 [v_overlay_0]' +
+                    '" ' +
+                    '-map "[v_overlay_0]" ' +
+                    `-y ${_path('./fixtures/assets1/output.mp4')}`;
+
+                Should(command).eql(expected);
             });
 
         });
 
     })
 
+    // TODO: maybe kill this, allowing no output dimensions throws off a lot of stuff
     describe('createFfmpegOptions', function () {
-        it('Should work with a video and an audio object provided and without an output object', function() {
+        xit('Should work with a video and an audio object provided and without an output object', function() {
             const options = ffmpegCommandService.createFfmpegOptions({
                 video: {
                     filePath: 'sample.mp4',
@@ -1067,12 +1306,12 @@ describe('FfmpegCommandService', function() {
                     trimStart: 0,
                     trimDuration: 10
                 },
-                workingDirectory: Path.resolve(__dirname, './fixtures/assets1')
+                workingDirectory: _path('./fixtures/assets1')
             });
 
             Should(options.inputs).eql([
-                { type: 'video', input: Path.resolve(__dirname, './fixtures/assets1/sample.mp4') },
-                { type: 'audio', input: Path.resolve(__dirname, './fixtures/assets1/music.mp3') }
+                { type: 'video', input: _path('./fixtures/assets1/sample.mp4') },
+                { type: 'audio', input: _path('./fixtures/assets1/music.mp3') }
             ]);
 
             Should(options.filterComplex.filter).eql("[0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]");
@@ -1095,6 +1334,13 @@ describe('FfmpegCommandService', function() {
                     trimStart: 0,
                     trimDuration: 10
                 },
+                output: {
+                    filePath: 'output.mp4',
+                    dimensions: {
+                        width: 1920,
+                        height: 1080
+                    }
+                }
             });
 
             Should(options.inputs).eql([
@@ -1102,7 +1348,15 @@ describe('FfmpegCommandService', function() {
                 { type: 'audio', input: 'https://example.com/music.mp3' }
             ]);
 
-            Should(options.filterComplex.filter).eql("[0:v] trim=start=0:duration=10, setpts=PTS-STARTPTS [v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; [1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; [a0] concat=n=1:v=0:a=1 [a_concat]");
+            Should(options.filterComplex.filter).eql(
+                "[0:v] " +
+                'scale=1920:1080:force_original_aspect_ratio=decrease, setsar=1, ' +
+                'pad=ih*1920/1080/sar:ih:(ow-iw)/2:(oh-ih)/2, ' +
+                "trim=start=0:duration=10, setpts=PTS-STARTPTS " +
+                "[v0]; [v0] concat=n=1:v=1:a=0 [v_concat]; " +
+                "[1:a] atrim=start=0:duration=10, asetpts=PTS-STARTPTS [a0]; " +
+                "[a0] concat=n=1:v=0:a=1 [a_concat]"
+            );
             Should(options.filterComplex.maps).eql(['v_concat', 'a_concat']);
         });
     })
